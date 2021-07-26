@@ -7,8 +7,8 @@ const mongoose=require("mongoose");
 const database=require("./database");
 
 //Models
-const BookModels=require("./database/book");
-const AuthorModels=require("./database/author");
+const BookModel=require("./database/book");
+const AuthorModel=require("./database/author");
 const PublicationModel=require("./database/publication");
 
 //Initialization
@@ -37,8 +37,9 @@ Methods:get
 
 */
 
-booky.get("/",(req,res)=>{
-    return res.json({books:database.books});
+booky.get("/",async(req,res)=>{
+    const getAllBooks= await BookModel.find();
+    return res.json(getAllBooks);
 });
 
 /* 
@@ -49,12 +50,10 @@ Parameter:isbn
 Methods:get
 
 */
-
-
-booky.get("/is/:isbn",(req,res)=>{
-    const getSpecificBook=database.books.filter((book)=>book.ISBN===req.params.isbn);
+booky.get("/is/:isbn",async(req,res)=>{
+ const getSpecificBook=await BookModel.findOne({ISBN:req.params.isbn});
     
-    if(getSpecificBook.length===0)
+    if(!getSpecificBook)
     {
         return res.json({error:`No book found for the ISBN of ${req.params.isbn}`,
     });
@@ -71,15 +70,15 @@ Access:public
 Parameter:category
 Methods:get
 */
-booky.get("/c/:category",(req,res)=>{
- const getSpecificBook=database.books.filter((book)=>book.category.includes(req.params.category));
+booky.get("/c/:category",async(req,res)=>{
+ const getSpecificBook=await BookModel.findOne({category:req.params.category,});
  
- if(getSpecificBook.length===0)
+ if(!getSpecificBook)
  {
      return res.json({error:`No book found for the category of ${req.params.category}`,
  });
  }
- return res.json({book:getSpecificBook});
+ return res.json({books:getSpecificBook});
 
 
 
@@ -110,10 +109,10 @@ Access:public
 Parameter:none
 Methods:post
 */
-booky.post("/book/add",(req,res)=>{
+booky.post("/book/add",async(req,res)=>{
     const{newBook}=req.body;
-    database.books.push(newBook);
-    return res.json({books:database.books});
+    BookModel.create(newBook);
+    return res.json({message:"book was added!"});
 });
 /* 
 Route:/book/update/title
@@ -181,8 +180,9 @@ Access:public
 Parameter:none
 Methods:get
 */
-booky.get("/author",(req,res)=>{
-    return res.json({authors:database.author});
+booky.get("/author",async(req,res)=>{
+    const getAllAuthors=await AuthorModel.find();
+    return res.json({authors:getAllAuthors});
 });
 
 /* 
@@ -218,8 +218,8 @@ Methods:post
 */
 booky.post("/author/add",(req,res)=>{
     const { newAuthor }=req.body;
-    database.author.push(newAuthor);
-    return res.json({authors:database.author});
+    AuthorModel.create(newAuthor);
+    return res.json({message:"author was added"});
 });
 
 /* 
@@ -275,8 +275,8 @@ Methods:post
 */
 booky.post("/publication/add",(req,res)=>{
     const { newPublication }=req.body;
-    database.publication.push(newPublication);
-    return res.json({publication:database.publication});
+  PublicationModel.create(newPublication );
+    return res.json({message:"publication was added!"});
 });
 /* 
 Route:/publication/update/book
