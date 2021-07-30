@@ -145,10 +145,15 @@ Access:public
 Parameter:isbn
 Methods:delete
 */
-booky.delete("/book/delete/:isbn",(req,res)=>{
-    const updatedBookDatabase=database.books.filter((book)=>book.ISBN!==req.params.isbn);
-    database.books=updatedBookDatabase;
-    return res.json({books:database.books});
+booky.delete("/book/delete/:isbn",async(req,res)=>{
+  
+const updatedBookDatabase=await BookModel.findOneAndDelete({
+   ISBN:req.params.isbn, 
+})
+    
+    //const updatedBookDatabase=database.books.filter((book)=>book.ISBN!==req.params.isbn);
+    //database.books=updatedBookDatabase;
+    return res.json({books:updatedBookDatabase});
 
 });
 
@@ -160,10 +165,40 @@ Access:public
 Parameter:isbn
 Methods:put
 */
-booky.put("/book/update/author/:isbn/:authorId",(req,res)=>{
+booky.put("/book/update/author/:isbn",async (req,res)=>{
   //update book database
 
-  database.books.forEach((book)=>{
+  const updatedBook=await BookModel.findOneAndUpdate(
+      {
+        ISBN:req.params.isbn,
+      },
+      {
+        $addToSet:{
+          authors:req.body.newAuthor
+        },
+      },
+      {
+          new:true,
+      }
+  );
+
+  //update the author database
+
+  const updatedAuthor=await AuthorModel.findOneAndUpdate(
+      {
+          id:req.body.newAuthor,
+      },
+      {
+          $addToSet:{
+              books:req.params.isbn,
+          },
+      },
+      {
+       new:true
+      }
+      );
+
+  /*database.books.forEach((book)=>{
       if(book.ISBN===req.params.isbn){
           return book.author.push(parseInt(req.params.authorId));
       }
@@ -172,8 +207,12 @@ booky.put("/book/update/author/:isbn/:authorId",(req,res)=>{
 
   database.author.forEach((author)=>{
       if(author.id===parseInt(req.params.authorId)) return author.books.push(req.params.isbn);
-  });
-  return res.json({books:database.books,author:database.author});
+  });*/
+  return res.json({
+      books:updatedBook,
+      author:updatedAuthor,
+      message:"New author was added",
+    });
 });
 
 
