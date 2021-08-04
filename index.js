@@ -272,12 +272,25 @@ booky.post("/author/add",(req,res)=>{
 Route:/book/delete/author
 Description: delete a author from a book
 Access:public
-Parameter:isbn
+Parameter:isbn,author id
 Methods:delete
 */
-booky.delete("/book/delete/author/:isbn/:authorId",(req,res)=>{
+booky.delete("/book/delete/author/:isbn/:authorId",async (req,res)=>{
   //update the book database
-  database.books.forEach((book)=>{
+const updatedBook=await BookModel.findOneAndUpdate(
+    {
+      ISBN:req.params.isbn,
+    },
+    {
+      $pull:{
+       authors:parseInt(req.params.authorId),          
+    },
+    },
+    {new:true}
+);
+ 
+ 
+  /* database.books.forEach((book)=>{
     if(book.ISBN===req.params.isbn){
         const newAuthorList=book.author.filter(
           (author)=>author!==parseInt(req.params.authorId)  
@@ -285,9 +298,25 @@ booky.delete("/book/delete/author/:isbn/:authorId",(req,res)=>{
         book.author=newAuthorList;
         return;
     }
-  });  
+  });*/
+
+
   //update the author database
-  database.author.forEach((author)=>{
+
+const updatedAuthor=await AuthorModel.findOneAndUpdate(
+    {
+    id:parseInt(req.params.authorId),
+    },
+
+    {
+        $pull:{
+         books:req.params.isbn,
+        },
+    },
+    {new:true}
+);
+
+  /*database.author.forEach((author)=>{
   if(author.id===parseInt(req.params.authorId)){
       const newBookList=author.books.filter(
       (book)=>book!==req.params.isbn
@@ -296,8 +325,11 @@ booky.delete("/book/delete/author/:isbn/:authorId",(req,res)=>{
       return;
   }
   });
-  return res.json({book:database.books,author:database.author,
-    message:"author was deleted!!!",
+  */
+  return res.json({
+      book:updatedBook,
+      author:updatedAuthor,
+      message:"author was deleted!!!",
 });
 });
     
